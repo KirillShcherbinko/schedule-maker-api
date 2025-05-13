@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  passwordHash String     @map("password_hash")
+  schedules    Schedule[]
+
+  @@map("users")
+}
+
+model Schedule {
+  id          Int     @id @default(autoincrement())
+  userId      Int     @map("user_id")
+  user        User    @relation(fields: [userId], references: [id])
+  title       String
+  streamTitle String
+  events      Event[]
+  tags        Tag[]
+
+  @@map("schedules")
+}
+
+model Event {
+  id          Int        @id @default(autoincrement())
+  scheduleId  Int        @map("schedule_id")
+  schedule    Schedule   @relation(fields: [scheduleId], references: [id])
+  streamLabel String?    @map("stream_label")
+  title       String
+  description String
+  startTime   DateTime   @default(now()) @map("start_time")
+  endTime     DateTime   @default(now()) @map("end_time")
+  tags        EventTag[]
+
+  @@map("events")
+}
+
+model Tag {
+  id         Int        @id @default(autoincrement())
+  scheduleId Int?       @map("schedule_id")
+  schedule   Schedule?  @relation(fields: [scheduleId], references: [id])
+  title      String     @default("")
+  events     EventTag[]
+
+  @@map("tags")
+}
+
+model EventTag {
+  eventId Int @map("event_id")
+  tagId   Int @map("tag_id")
+
+  event Event @relation(fields: [eventId], references: [id])
+  tag   Tag   @relation(fields: [tagId], references: [id])
+
+  @@id([eventId, tagId])
+  @@map("event_tags")
+}
