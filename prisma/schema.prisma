@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  //output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -10,21 +10,30 @@ datasource db {
 
 model User {
   id           Int        @id @default(autoincrement())
-  username     String     @unique
+  email        String     @unique
   passwordHash String     @map("password_hash")
+  tokens       Token[]
   schedules    Schedule[]
 
   @@map("users")
 }
 
+model Token {
+  id           Int    @id @default(autoincrement())
+  userId       Int    @unique @map("user_id")
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String
+
+  @@map("tokens")
+}
+
 model Schedule {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @map("user_id")
-  user        User    @relation(fields: [userId], references: [id])
-  title       String
-  streamTitle String
-  events      Event[]
-  tags        Tag[]
+  id     Int     @id @default(autoincrement())
+  userId Int     @map("user_id")
+  user   User    @relation(fields: [userId], references: [id])
+  title  String
+  events Event[]
+  tags   Tag[]
 
   @@map("schedules")
 }
@@ -33,7 +42,6 @@ model Event {
   id          Int        @id @default(autoincrement())
   scheduleId  Int        @map("schedule_id")
   schedule    Schedule   @relation(fields: [scheduleId], references: [id])
-  streamLabel String?    @map("stream_label")
   title       String
   description String
   startTime   DateTime   @default(now()) @map("start_time")
@@ -45,8 +53,8 @@ model Event {
 
 model Tag {
   id         Int        @id @default(autoincrement())
-  scheduleId Int?       @map("schedule_id")
-  schedule   Schedule?  @relation(fields: [scheduleId], references: [id])
+  scheduleId Int        @map("schedule_id")
+  schedule   Schedule   @relation(fields: [scheduleId], references: [id])
   title      String     @default("")
   events     EventTag[]
 
