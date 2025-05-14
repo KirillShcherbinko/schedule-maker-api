@@ -21,6 +21,23 @@ class AuthService {
 
     return { ...tokens, ...user };
   }
+
+  async login(email: string, password: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new Error('User does not exist');
+
+    const isPasswordEqual = compareSync(password, user.passwordHash);
+    if (!isPasswordEqual) throw new Error('Passwords don`t match');
+
+    const tokens = tokenService.generateToken({ id: user.id, email: user.email });
+    await tokenService.saveToken(user.id, tokens.refreshToken);
+
+    return { ...tokens, id: user.id, email: user.email };
+  }
+
+  async logout(refreshToken: string) {
+    return await tokenService.removeToken(refreshToken);
+  }
 }
 
 export default new AuthService();

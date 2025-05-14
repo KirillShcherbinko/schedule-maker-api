@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import prisma from '../prisma';
 
-class TokenService  {
+class TokenService {
   generateToken(payload: JwtPayload) {
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     const refreshSecret = process.env.JWT_REFRESH_SECRET;
@@ -28,6 +28,11 @@ class TokenService  {
 
     return await prisma.token.create({ data: { userId, refreshToken } });
   }
+
+  async removeToken(refreshToken: string) {
+    const tokenData = await prisma.token.deleteMany({ where: { refreshToken } });
+    return tokenData;
+  }
 }
 
-export default new TokenService ();
+export default new TokenService();
