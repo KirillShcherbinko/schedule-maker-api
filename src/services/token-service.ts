@@ -16,6 +16,35 @@ class TokenService {
     return { accessToken, refreshToken };
   }
 
+  validateRefreshToken<T extends JwtPayload>(refreshToken: string) {
+    try {
+      const refreshSecret = process.env.JWT_REFRESH_SECRET;
+      if (!refreshSecret) throw new Error('Refresh JWT secret is not defined');
+
+      const decoded = jwt.verify(refreshToken, refreshSecret);
+      return typeof decoded === 'object' && decoded !== null ? decoded as T : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  validateAccessToken<T extends JwtPayload>(accessToken: string) {
+    try {
+      const accessSecret = process.env.JWT_ACCESS_SECRET;
+      if (!accessSecret) throw new Error('Access JWT secret is not defined');
+
+      const decoded = jwt.verify(accessToken, accessSecret);
+      return typeof decoded === 'object' && decoded !== null ? decoded as T : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async findToken(refreshToken: string) {
+    const tokenData = prisma.token.findUnique({ where: { refreshToken } });
+    return tokenData;
+  }
+
   async saveToken(userId: number, refreshToken: string) {
     const tokenData = await prisma.token.findUnique({ where: { userId } });
 
@@ -30,7 +59,7 @@ class TokenService {
   }
 
   async removeToken(refreshToken: string) {
-    const tokenData = await prisma.token.deleteMany({ where: { refreshToken } });
+    const tokenData = await prisma.token.delete({ where: { refreshToken } });
     return tokenData;
   }
 }
